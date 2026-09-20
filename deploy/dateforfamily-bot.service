@@ -1,0 +1,15 @@
+[Unit]
+Description=Telegram-бот сервиса знакомств (dateforfamily)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+# Замените на своего пользователя и путь, если они отличаются:
+User=dateforfamily
+WorkingDirectory=/home/dateforfamily/dateforfamily
+ExecStart=/home/dateforfamily/dateforfamily/.venv/bin/python -m bot.main
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

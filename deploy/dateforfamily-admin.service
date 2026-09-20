@@ -1,0 +1,19 @@
+[Unit]
+Description=Админка сервиса знакомств (dateforfamily)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+# Замените на своего пользователя и путь, если они отличаются:
+User=dateforfamily
+WorkingDirectory=/home/dateforfamily/dateforfamily
+# 127.0.0.1 — админка НЕ видна из интернета напрямую, только через
+# SSH-туннель (см. DEPLOY.md, раздел "Доступ к админке"). Это осознанный
+# выбор: без своего домена нет смысла ставить https, а без https нельзя
+# честно защитить пароль, идущий по сети.
+ExecStart=/home/dateforfamily/dateforfamily/.venv/bin/uvicorn admin.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
