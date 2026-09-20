@@ -82,9 +82,9 @@ async def complete_survey(session, user_id: int) -> None:
         )
 
 
-async def make_match(db_session, male_tg_id=950, female_tg_id=951):
-    male = await make_user(db_session, male_tg_id, Gender.MALE, "Данияр")
-    female = await make_user(db_session, female_tg_id, Gender.FEMALE, "Айгерим")
+async def make_match(db_session, male_tg_id=950, female_tg_id=951, male_name="Данияр", female_name="Айгерим"):
+    male = await make_user(db_session, male_tg_id, Gender.MALE, male_name)
+    female = await make_user(db_session, female_tg_id, Gender.FEMALE, female_name)
     await complete_survey(db_session, male.id)
     await complete_survey(db_session, female.id)
 
@@ -127,6 +127,24 @@ async def test_mutual_interest_reveals_contact_with_username(db_session):
     assert match.status_a == MatchStatus.INTERESTED
     assert match.status_b == MatchStatus.INTERESTED
     assert match.mutual_at is not None  # нужно для отсчёта 3 дней до запроса отзыва
+
+
+async def test_malicious_name_is_html_escaped_in_messages(db_session):
+    # Регрессия: раньше имя/город подставлялись в HTML-сообщение бота как
+    # есть, и человек мог вписать в имя HTML-код (например, ссылку).
+    evil_name = "<b>Айдос</b><a href='http://evil.example'>клик</a>"
+    male, female, match_id = await make_match(db_session, male_name=evil_name)
+    bot = FakeBot()
+
+    # Карточка кандидата уходит через send_match_notifications, но здесь
+    # достаточно проверить обмен контактами — та же функция экранирования.
+    await handle_match_decision(FakeCallbackQuery(f"match:interest:{match_id}", male.tg_id, bot))
+    await handle_match_decision(FakeCallbackQuery(f"match:interest:{match_id}", female.tg_id, bot))
+
+    to_female = next(text for chat_id, text in bot.sent_messages if chat_id == female.tg_id)
+    assert "<b>" not in to_female
+    assert "<a href" not in to_female
+    assert "&lt;b&gt;" in to_female
 
 
 async def test_decline_does_not_reveal_contact_even_if_other_interested(db_session):

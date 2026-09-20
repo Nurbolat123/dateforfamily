@@ -1,7 +1,10 @@
+import logging
+
 from aiogram import Bot, F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
+from bot.formatting import escape
 from bot.keyboards import options_keyboard
 from bot.states import FeedbackFlow
 from core.db import async_session
@@ -10,20 +13,24 @@ from core.locales import ui_text
 from core.repository import create_feedback, get_user_by_tg_id
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 LANGUAGE = "ru"  # Казахский появится отдельным шагом (см. CLAUDE.md).
 
 
 async def send_feedback_requests(bot: Bot, requests: list[FeedbackRequest]) -> None:
     for request in requests:
-        intro = ui_text("feedback_intro", LANGUAGE).format(name=request.other_name)
+        intro = ui_text("feedback_intro", LANGUAGE).format(name=escape(request.other_name))
         question = ui_text("feedback_met_question", LANGUAGE)
         text = f"{intro}\n{question}"
         keyboard = options_keyboard(
             [("yes", ui_text("yes", LANGUAGE)), ("no", ui_text("no", LANGUAGE))],
             f"feedback:met:{request.match_id}",
         )
-        await bot.send_message(request.viewer_tg_id, text, reply_markup=keyboard)
+        try:
+            await bot.send_message(request.viewer_tg_id, text, reply_markup=keyboard)
+        except Exception:
+            logger.exception("Не удалось отправить запрос отзыва пользователю %s", request.viewer_tg_id)
 
 
 @router.callback_query(F.data.startswith("feedback:met:"))

@@ -7,14 +7,16 @@
 пароль из .env (ADMIN_USERNAME / ADMIN_PASSWORD).
 """
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Form, Request
+from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from admin.auth import require_admin
+from admin.auth import require_admin, require_same_origin
+from core.config import settings
 from core.db import get_session
 from core.format import calculate_age
 from core.models import Gender, MatchStatus, UserStatus
@@ -30,7 +32,18 @@ from core.repository import (
     set_user_status,
 )
 
-app = FastAPI(title="Админка сервиса знакомств")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if not settings.admin_password:
+        raise RuntimeError(
+            "ADMIN_PASSWORD не задан. Впишите пароль в .env перед запуском админки — "
+            "без него никто не сможет (и, для безопасности, не должен) в неё войти."
+        )
+    yield
+
+
+app = FastAPI(title="Админка сервиса знакомств", lifespan=lifespan)
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 GENDER_LABELS = {Gender.MALE: "Мужской", Gender.FEMALE: "Женский"}
@@ -84,11 +97,17 @@ async def update_user_status(
     user_id: int,
     status: str = Form(...),
     admin: str = Depends(require_admin),
+    _origin: None = Depends(require_same_origin),
     session: AsyncSession = Depends(get_session),
 ) -> RedirectResponse:
+    try:
+        new_status = UserStatus(status)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Неизвестный статус: {status}")
+
     user = await get_user_by_id(session, user_id)
     if user is not None:
-        await set_user_status(session, user, UserStatus(status))
+        await set_user_status(session, user, new_status)
     return RedirectResponse("/users", status_code=303)
 
 
@@ -148,6 +167,7 @@ async def reports_page(
 async def resolve_report_view(
     report_id: int,
     admin: str = Depends(require_admin),
+    _origin: None = Depends(require_same_origin),
     session: AsyncSession = Depends(get_session),
 ) -> RedirectResponse:
     report = await get_report_by_id(session, report_id)

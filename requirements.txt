@@ -2,9 +2,9 @@
 aiogram==3.13.1
 
 # API и админка
-fastapi==0.115.0
+fastapi==0.141.1
 uvicorn[standard]==0.30.6
-jinja2==3.1.4
+jinja2==3.1.6
 python-multipart==0.0.12
 
 # База данных

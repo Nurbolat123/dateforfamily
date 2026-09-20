@@ -26,7 +26,11 @@ def _set_admin_password(monkeypatch):
 async def make_client() -> httpx.AsyncClient:
     transport = ASGITransport(app=app)
     auth = (settings.admin_username, settings.admin_password)
-    return httpx.AsyncClient(transport=transport, base_url="http://test", auth=auth)
+    # Origin должен совпадать с base_url — иначе защита от CSRF (см.
+    # admin/auth.py require_same_origin) отклонит POST-запросы, как и должна.
+    return httpx.AsyncClient(
+        transport=transport, base_url="http://test", auth=auth, headers={"origin": "http://test"}
+    )
 
 
 async def make_user(session, tg_id: int, gender: Gender, name: str, status=UserStatus.NEW):
@@ -63,6 +67,32 @@ async def test_pages_require_authentication(db_session):
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.get("/users")
     assert response.status_code == 401
+
+
+async def test_empty_admin_password_never_authenticates(db_session, monkeypatch):
+    # Регрессия: пустой ADMIN_PASSWORD раньше означал "пароль не нужен".
+    monkeypatch.setattr(settings, "admin_password", "")
+    transport = ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test", auth=("admin", "")) as client:
+        response = await client.get("/users")
+    assert response.status_code == 401
+
+
+async def test_post_without_matching_origin_is_rejected(db_session):
+    # Регрессия: раньше формы можно было отправить с любого сайта (CSRF).
+    user = await make_user(db_session, 1099, Gender.MALE, "Чужой")
+    transport = ASGITransport(app=app)
+    auth = (settings.admin_username, settings.admin_password)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test", auth=auth) as client:
+        response = await client.post(
+            f"/users/{user.id}/status",
+            data={"status": "blocked"},
+            headers={"origin": "http://evil.example"},
+        )
+
+    assert response.status_code == 403
+    await db_session.refresh(user)
+    assert user.status == UserStatus.NEW  # запрос отклонён, статус не изменился
 
 
 async def test_users_page_lists_registered_people(db_session):

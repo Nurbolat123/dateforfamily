@@ -1,9 +1,11 @@
+import logging
 from datetime import datetime, timezone
 
 from aiogram import Bot, F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
+from bot.formatting import escape
 from bot.keyboards import match_decision_keyboard
 from bot.states import ReportFlow
 from core.db import async_session
@@ -20,6 +22,7 @@ from core.repository import (
 from core.weekly_matching import MatchNotification
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 LANGUAGE = "ru"  # Казахский появится отдельным шагом (см. CLAUDE.md).
 
@@ -31,8 +34,8 @@ def _format_match_message(notification: MatchNotification) -> str:
     lines = [
         ui_text("match_intro", LANGUAGE),
         "",
-        f"{notification.other_name}, {format_age_ru(age)}",
-        ui_text("match_city_line", LANGUAGE).format(city=notification.other_city),
+        f"{escape(notification.other_name)}, {format_age_ru(age)}",
+        ui_text("match_city_line", LANGUAGE).format(city=escape(notification.other_city)),
         ui_text(relocate_key, LANGUAGE),
         "",
         ui_text("match_score_line", LANGUAGE).format(percent=round(notification.result.score * 100)),
@@ -65,7 +68,11 @@ async def send_match_notifications(bot: Bot, notifications: list[MatchNotificati
             ui_text("match_decline_button", LANGUAGE),
             ui_text("match_report_button", LANGUAGE),
         )
-        await bot.send_message(notification.viewer_tg_id, text, reply_markup=keyboard)
+        try:
+            await bot.send_message(notification.viewer_tg_id, text, reply_markup=keyboard)
+        except Exception:
+            # Один неотправленный кандидат не должен останавливать рассылку остальным.
+            logger.exception("Не удалось отправить карточку кандидата пользователю %s", notification.viewer_tg_id)
 
 
 async def _reveal_contact(bot: Bot, to_tg_id: int, other_tg_id: int, other_name: str) -> None:
@@ -75,15 +82,18 @@ async def _reveal_contact(bot: Bot, to_tg_id: int, other_tg_id: int, other_name:
     except Exception:
         username = None
 
-    intro = ui_text("mutual_match_intro", LANGUAGE).format(name=other_name)
+    intro = ui_text("mutual_match_intro", LANGUAGE).format(name=escape(other_name))
     if username:
-        contact_line = ui_text("mutual_match_contact_username", LANGUAGE).format(username=username)
+        contact_line = ui_text("mutual_match_contact_username", LANGUAGE).format(username=escape(username))
     else:
         contact_line = ui_text("mutual_match_contact_link", LANGUAGE).format(
             link=f"tg://user?id={other_tg_id}"
         )
 
-    await bot.send_message(to_tg_id, f"{intro}\n{contact_line}")
+    try:
+        await bot.send_message(to_tg_id, f"{intro}\n{contact_line}")
+    except Exception:
+        logger.exception("Не удалось отправить контакт пользователю %s", to_tg_id)
 
 
 async def _find_viewer_and_other(session, match, viewer_tg_id: int):
@@ -121,6 +131,10 @@ async def handle_match_decision(callback: CallbackQuery) -> None:
 
         new_status = MatchStatus.INTERESTED if decision == "interest" else MatchStatus.DECLINED
         await set_match_side_status(session, match, is_user_a=is_user_a, status=new_status)
+
+        # Перечитываем строку из базы: если вторая сторона решила буквально
+        # в ту же секунду, наш объект в памяти мог не увидеть её изменение.
+        await session.refresh(match)
         mutual = match.status_a == MatchStatus.INTERESTED and match.status_b == MatchStatus.INTERESTED
 
         if mutual and match.mutual_at is None:
