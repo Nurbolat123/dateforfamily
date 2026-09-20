@@ -1,0 +1,19 @@
+# Telegram-бот
+aiogram==3.13.1
+
+# API и админка
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# База данных
+sqlalchemy==2.0.35
+alembic==1.13.3
+asyncpg==0.29.0
+
+# Конфигурация из .env
+python-dotenv==1.0.1
+pydantic-settings==2.5.2
+
+# Тесты
+pytest==8.3.3
+pytest-asyncio==0.24.0
