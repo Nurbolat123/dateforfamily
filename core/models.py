@@ -1,5 +1,5 @@
 import enum
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from sqlalchemy import JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -85,22 +85,26 @@ class Question(Base):
     text_kz: Mapped[str]
     options: Mapped[list] = mapped_column(JSON)
 
-    answers: Mapped[list["Answer"]] = relationship(back_populates="question")
-
 
 class Answer(Base):
+    """Ответ пользователя на один вопрос анкеты.
+
+    question_key — стабильный технический ключ вопроса из core/questions.py
+    (например, "smoking"), а не номер строки в таблице questions: набор
+    вопросов MVP задан в коде, а не в базе (см. core/questions.py).
+    """
+
     __tablename__ = "answers"
-    __table_args__ = (UniqueConstraint("user_id", "question_id"),)
+    __table_args__ = (UniqueConstraint("user_id", "question_key"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"))
+    question_key: Mapped[str]
     own_option: Mapped[str]
     acceptable_options: Mapped[list] = mapped_column(JSON)
     importance: Mapped[Importance]
 
     user: Mapped["User"] = relationship(back_populates="answers")
-    question: Mapped["Question"] = relationship(back_populates="answers")
 
 
 class Match(Base):
@@ -113,7 +117,9 @@ class Match(Base):
     week: Mapped[date]
     status_a: Mapped[MatchStatus] = mapped_column(default=MatchStatus.PENDING)
     status_b: Mapped[MatchStatus] = mapped_column(default=MatchStatus.PENDING)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
 
 
 class Feedback(Base):

@@ -49,3 +49,11 @@ def by_key(key: str) -> QuestionDefinition:
         if question.key == key:
             return question
     raise KeyError(f"Неизвестный вопрос анкеты: {key}")
+
+
+def first_unanswered_index(answered_keys: set[str]) -> int | None:
+    """Индекс первого вопроса, на который ещё нет ответа (для продолжения анкеты)."""
+    for index, question in enumerate(QUESTIONS):
+        if question.key not in answered_keys:
+            return index
+    return None

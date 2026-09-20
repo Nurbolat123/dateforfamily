@@ -22,7 +22,7 @@ MATCH_THRESHOLD = 0.6
 class QuestionAnswer:
     """Ответ одного пользователя на один вопрос анкеты."""
 
-    question_id: int
+    question_key: str
     layer: str  # "filter" | "values" | "lifestyle"
     own_option: str
     acceptable_options: tuple[str, ...]
@@ -38,16 +38,16 @@ class Candidate:
     clan_ru: str | None
     answers: tuple[QuestionAnswer, ...]
 
-    def answers_by_question(self) -> dict[int, QuestionAnswer]:
-        return {a.question_id: a for a in self.answers}
+    def answers_by_question(self) -> dict[str, QuestionAnswer]:
+        return {a.question_key: a for a in self.answers}
 
 
 @dataclass(frozen=True)
 class MatchExplanation:
     """Объяснение результата: что совпало, а что разошлось."""
 
-    matched_important: list[int]
-    mismatched_important: list[int]
+    matched_important: list[str]
+    mismatched_important: list[str]
 
 
 @dataclass(frozen=True)
@@ -68,19 +68,19 @@ def passes_hard_filters(a: Candidate, b: Candidate) -> bool:
     a_answers = a.answers_by_question()
     b_answers = b.answers_by_question()
 
-    for question_id, a_answer in a_answers.items():
+    for question_key, a_answer in a_answers.items():
         if a_answer.layer != "filter":
             continue
-        b_answer = b_answers.get(question_id)
+        b_answer = b_answers.get(question_key)
         if b_answer is None:
             continue
         if b_answer.own_option not in a_answer.acceptable_options:
             return False
 
-    for question_id, b_answer in b_answers.items():
+    for question_key, b_answer in b_answers.items():
         if b_answer.layer != "filter":
             continue
-        a_answer = a_answers.get(question_id)
+        a_answer = a_answers.get(question_key)
         if a_answer is None:
             continue
         if a_answer.own_option not in b_answer.acceptable_options:
@@ -102,13 +102,13 @@ def directional_score(a: Candidate, b: Candidate) -> float:
     total_weight = 0
     satisfied_weight = 0
 
-    for question_id, a_answer in a.answers_by_question().items():
+    for question_key, a_answer in a.answers_by_question().items():
         weight = IMPORTANCE_WEIGHTS[a_answer.importance]
         if weight == 0:
             continue
         total_weight += weight
 
-        b_answer = b_answers.get(question_id)
+        b_answer = b_answers.get(question_key)
         if b_answer is not None and b_answer.own_option in a_answer.acceptable_options:
             satisfied_weight += weight
 
@@ -125,16 +125,16 @@ def build_explanation(a: Candidate, b: Candidate) -> MatchExplanation:
     matched: list[int] = []
     mismatched: list[int] = []
 
-    for question_id, a_answer in a.answers_by_question().items():
+    for question_key, a_answer in a.answers_by_question().items():
         if a_answer.importance == 0:
             continue
-        b_answer = b_answers.get(question_id)
+        b_answer = b_answers.get(question_key)
         if b_answer is None:
             continue
         if b_answer.own_option in a_answer.acceptable_options:
-            matched.append(question_id)
+            matched.append(question_key)
         else:
-            mismatched.append(question_id)
+            mismatched.append(question_key)
 
     return MatchExplanation(matched_important=matched, mismatched_important=mismatched)
 

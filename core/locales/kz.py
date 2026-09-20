@@ -6,3 +6,4 @@
 """
 
 QUESTIONS: dict[str, dict] = {}
+UI: dict[str, str] = {}

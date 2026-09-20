@@ -19,3 +19,8 @@ def question_text(question_key: str, language: str) -> str:
 def option_text(question_key: str, option_value: str, language: str) -> str:
     module = _LANGUAGES[language]
     return module.QUESTIONS[question_key]["options"][option_value]
+
+
+def ui_text(key: str, language: str) -> str:
+    module = _LANGUAGES[language]
+    return module.UI[key]

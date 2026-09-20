@@ -24,9 +24,9 @@ def make_candidate(
     )
 
 
-def filter_answer(question_id: int, own: str, acceptable: tuple[str, ...], importance: int = 2) -> QuestionAnswer:
+def filter_answer(question_key: int, own: str, acceptable: tuple[str, ...], importance: int = 2) -> QuestionAnswer:
     return QuestionAnswer(
-        question_id=question_id,
+        question_key=str(question_key),
         layer="filter",
         own_option=own,
         acceptable_options=acceptable,
@@ -34,9 +34,9 @@ def filter_answer(question_id: int, own: str, acceptable: tuple[str, ...], impor
     )
 
 
-def values_answer(question_id: int, own: str, acceptable: tuple[str, ...], importance: int) -> QuestionAnswer:
+def values_answer(question_key: int, own: str, acceptable: tuple[str, ...], importance: int) -> QuestionAnswer:
     return QuestionAnswer(
-        question_id=question_id,
+        question_key=str(question_key),
         layer="values",
         own_option=own,
         acceptable_options=acceptable,
@@ -204,8 +204,8 @@ def test_explanation_lists_matched_and_mismatched_important_questions():
 
     explanation = build_explanation(a, b)
 
-    assert explanation.matched_important == [1]
-    assert explanation.mismatched_important == [2]
+    assert explanation.matched_important == ["1"]
+    assert explanation.mismatched_important == ["2"]
 
 
 def test_calculate_match_includes_explanation_when_above_threshold():
@@ -229,8 +229,8 @@ def test_calculate_match_includes_explanation_when_above_threshold():
     match = calculate_match(a, b)
 
     assert match is not None
-    assert match.explanation.matched_important == [1, 2]
-    assert match.explanation.mismatched_important == [3]
+    assert match.explanation.matched_important == ["1", "2"]
+    assert match.explanation.mismatched_important == ["3"]
 
 
 # --- "Жеті ата" ---
