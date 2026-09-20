@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}Админка{% endblock %}</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; background: #f7f7f8; color: #1a1a1a; }
+        nav { background: #1a1a1a; padding: 12px 24px; }
+        nav a { color: #fff; text-decoration: none; margin-right: 20px; font-size: 15px; }
+        nav a.active { text-decoration: underline; }
+        main { padding: 24px; max-width: 1000px; margin: 0 auto; }
+        table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { padding: 8px 12px; border-bottom: 1px solid #e5e5e5; text-align: left; font-size: 14px; }
+        th { background: #eee; }
+        tr:hover { background: #fafafa; }
+        form { display: inline; }
+        button { cursor: pointer; border: none; border-radius: 4px; padding: 5px 10px; font-size: 13px; margin-right: 4px; }
+        .btn-verify { background: #22863a; color: #fff; }
+        .btn-block { background: #d1242f; color: #fff; }
+        .btn-unblock { background: #9a6700; color: #fff; }
+        .btn-resolve { background: #0969da; color: #fff; }
+        .status-new { color: #9a6700; }
+        .status-verified { color: #22863a; }
+        .status-blocked { color: #d1242f; }
+        .empty { color: #666; padding: 24px; }
+        h1 { font-size: 20px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/users" class="{% if active == 'users' %}active{% endif %}">Анкеты</a>
+        <a href="/matches" class="{% if active == 'matches' %}active{% endif %}">Подборки</a>
+        <a href="/reports" class="{% if active == 'reports' %}active{% endif %}">Жалобы</a>
+    </nav>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

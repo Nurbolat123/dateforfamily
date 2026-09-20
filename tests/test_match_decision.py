@@ -9,7 +9,7 @@ import pytest
 
 from bot.handlers.matches import handle_match_decision
 from core.consent import CURRENT_CONSENT_VERSION
-from core.models import Gender, MatchStatus
+from core.models import Gender, MatchStatus, UserStatus
 from core.questions import QUESTIONS
 from core.repository import create_user, get_match_by_id, save_answer
 from core.weekly_matching import run_weekly_matching
@@ -54,7 +54,7 @@ class FakeCallbackQuery:
 
 
 async def make_user(session, tg_id: int, gender: Gender, name: str):
-    return await create_user(
+    user = await create_user(
         session,
         tg_id=tg_id,
         name=name,
@@ -64,6 +64,9 @@ async def make_user(session, tg_id: int, gender: Gender, name: str):
         willing_to_relocate=False,
         consent_version=CURRENT_CONSENT_VERSION,
     )
+    user.status = UserStatus.VERIFIED
+    await session.commit()
+    return user
 
 
 async def complete_survey(session, user_id: int) -> None:

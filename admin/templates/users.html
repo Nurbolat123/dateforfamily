@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Анкеты — админка{% endblock %}
+{% block content %}
+<h1>Анкеты ({{ users|length }})</h1>
+{% if users %}
+<table>
+    <tr>
+        <th>Имя</th>
+        <th>Пол</th>
+        <th>Возраст</th>
+        <th>Город</th>
+        <th>Анкета</th>
+        <th>Статус</th>
+        <th>Действия</th>
+    </tr>
+    {% for row in users %}
+    <tr>
+        <td>{{ row.name }}</td>
+        <td>{{ row.gender_label }}</td>
+        <td>{{ row.age }}</td>
+        <td>{{ row.city }}</td>
+        <td>{{ row.answered_count }} / {{ row.total_questions }}</td>
+        <td class="status-{{ row.status.value }}">{{ row.status_label }}</td>
+        <td>
+            {% if row.status.value != "verified" %}
+            <form method="post" action="/users/{{ row.id }}/status">
+                <input type="hidden" name="status" value="verified">
+                <button class="btn-verify" type="submit">Подтвердить</button>
+            </form>
+            {% endif %}
+            {% if row.status.value != "blocked" %}
+            <form method="post" action="/users/{{ row.id }}/status">
+                <input type="hidden" name="status" value="blocked">
+                <button class="btn-block" type="submit">Заблокировать</button>
+            </form>
+            {% else %}
+            <form method="post" action="/users/{{ row.id }}/status">
+                <input type="hidden" name="status" value="new">
+                <button class="btn-unblock" type="submit">Разблокировать</button>
+            </form>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty">Пока никто не зарегистрировался.</p>
+{% endif %}
+{% endblock %}

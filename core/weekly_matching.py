@@ -41,8 +41,12 @@ def week_start(today: date | None = None) -> date:
 
 
 async def _load_eligible_candidates(session: AsyncSession) -> tuple[dict[int, User], dict[int, Candidate]]:
-    """Пользователи, полностью прошедшие анкету и не заблокированные."""
-    users_result = await session.execute(select(User).where(User.status != UserStatus.BLOCKED))
+    """Пользователи, полностью прошедшие анкету и подтверждённые администратором.
+
+    Новый пользователь (статус NEW) ждёт подтверждения в админке, прежде
+    чем начнёт участвовать в подборе — см. CLAUDE.md, шаг 6.
+    """
+    users_result = await session.execute(select(User).where(User.status == UserStatus.VERIFIED))
     users_by_id = {u.id: u for u in users_result.scalars().all()}
 
     answers_result = await session.execute(

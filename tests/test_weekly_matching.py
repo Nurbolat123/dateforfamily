@@ -11,8 +11,10 @@ from core.weekly_matching import MAX_NEW_MATCHES_PER_USER, run_weekly_matching
 pytestmark = pytest.mark.asyncio
 
 
-async def make_user(session, tg_id: int, gender: Gender, name: str | None = None):
-    return await create_user(
+async def make_user(
+    session, tg_id: int, gender: Gender, name: str | None = None, status: UserStatus = UserStatus.VERIFIED
+):
+    user = await create_user(
         session,
         tg_id=tg_id,
         name=name or f"User{tg_id}",
@@ -22,6 +24,9 @@ async def make_user(session, tg_id: int, gender: Gender, name: str | None = None
         willing_to_relocate=False,
         consent_version=CURRENT_CONSENT_VERSION,
     )
+    user.status = status
+    await session.commit()
+    return user
 
 
 async def complete_survey(session, user_id: int, own_value_index: int = 0) -> None:
@@ -87,11 +92,20 @@ async def test_skips_users_with_incomplete_survey(db_session):
 
 async def test_skips_blocked_users(db_session):
     male = await make_user(db_session, 707, Gender.MALE)
-    female = await make_user(db_session, 708, Gender.FEMALE)
+    female = await make_user(db_session, 708, Gender.FEMALE, status=UserStatus.BLOCKED)
     await complete_survey(db_session, male.id)
     await complete_survey(db_session, female.id)
-    female.status = UserStatus.BLOCKED
-    await db_session.commit()
+
+    notifications = await run_weekly_matching(db_session)
+
+    assert notifications == []
+
+
+async def test_skips_users_not_yet_verified_by_admin(db_session):
+    male = await make_user(db_session, 711, Gender.MALE)
+    female = await make_user(db_session, 712, Gender.FEMALE, status=UserStatus.NEW)
+    await complete_survey(db_session, male.id)
+    await complete_survey(db_session, female.id)
 
     notifications = await run_weekly_matching(db_session)
 

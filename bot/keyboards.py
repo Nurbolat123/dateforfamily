@@ -27,9 +27,12 @@ def multiselect_keyboard(
     return builder.as_markup()
 
 
-def match_decision_keyboard(match_id: int, interest_label: str, decline_label: str) -> InlineKeyboardMarkup:
+def match_decision_keyboard(
+    match_id: int, interest_label: str, decline_label: str, report_label: str
+) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text=interest_label, callback_data=f"match:interest:{match_id}")
     builder.button(text=decline_label, callback_data=f"match:decline:{match_id}")
+    builder.button(text=report_label, callback_data=f"match:report:{match_id}")
     builder.adjust(1)
     return builder.as_markup()

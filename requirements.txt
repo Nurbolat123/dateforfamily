@@ -4,6 +4,8 @@ aiogram==3.13.1
 # API и админка
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
+jinja2==3.1.4
+python-multipart==0.0.12
 
 # База данных
 sqlalchemy==2.0.35
@@ -17,3 +19,4 @@ pydantic-settings==2.5.2
 # Тесты
 pytest==8.3.3
 pytest-asyncio==0.24.0
+httpx==0.27.2

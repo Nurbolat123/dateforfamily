@@ -18,3 +18,7 @@ class Survey(StatesGroup):
     waiting_own_answer = State()
     waiting_acceptable_answers = State()
     waiting_importance = State()
+
+
+class ReportFlow(StatesGroup):
+    waiting_reason = State()

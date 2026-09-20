@@ -9,7 +9,7 @@ from datetime import date, datetime, timezone
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models import Answer, Gender, Language, Match, MatchStatus, SchedulerState, User, UserStatus
+from core.models import Answer, Gender, Language, Match, MatchStatus, Report, SchedulerState, User, UserStatus
 
 
 async def get_user_by_tg_id(session: AsyncSession, tg_id: int) -> User | None:
@@ -116,4 +116,41 @@ async def set_match_side_status(
         match.status_a = status
     else:
         match.status_b = status
+    await session.commit()
+
+
+async def list_all_users(session: AsyncSession) -> list[User]:
+    result = await session.execute(select(User).order_by(User.id))
+    return list(result.scalars().all())
+
+
+async def set_user_status(session: AsyncSession, user: User, status: UserStatus) -> None:
+    user.status = status
+    await session.commit()
+
+
+async def list_all_matches(session: AsyncSession) -> list[Match]:
+    result = await session.execute(select(Match).order_by(Match.created_at.desc()))
+    return list(result.scalars().all())
+
+
+async def create_report(session: AsyncSession, *, from_user_id: int, on_user_id: int, reason: str) -> Report:
+    report = Report(from_user_id=from_user_id, on_user_id=on_user_id, reason=reason)
+    session.add(report)
+    await session.commit()
+    await session.refresh(report)
+    return report
+
+
+async def list_all_reports(session: AsyncSession) -> list[Report]:
+    result = await session.execute(select(Report).order_by(Report.id.desc()))
+    return list(result.scalars().all())
+
+
+async def get_report_by_id(session: AsyncSession, report_id: int) -> Report | None:
+    return await session.get(Report, report_id)
+
+
+async def resolve_report(session: AsyncSession, report: Report) -> None:
+    report.resolved = True
     await session.commit()

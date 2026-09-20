@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Жалобы — админка{% endblock %}
+{% block content %}
+<h1>Жалобы ({{ reports|length }})</h1>
+{% if reports %}
+<table>
+    <tr>
+        <th>От кого</th>
+        <th>На кого</th>
+        <th>Причина</th>
+        <th>Статус</th>
+        <th>Действия</th>
+    </tr>
+    {% for row in reports %}
+    <tr>
+        <td>{{ row.from_user_name }}</td>
+        <td>{{ row.on_user_name }}</td>
+        <td>{{ row.reason }}</td>
+        <td>{{ "Решено" if row.resolved else "Открыта" }}</td>
+        <td>
+            {% if not row.resolved %}
+            <form method="post" action="/reports/{{ row.id }}/resolve">
+                <button class="btn-resolve" type="submit">Отметить решённой</button>
+            </form>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty">Жалоб пока нет.</p>
+{% endif %}
+{% endblock %}

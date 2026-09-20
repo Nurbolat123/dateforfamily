@@ -8,6 +8,8 @@ class Settings(BaseSettings):
 
     bot_token: str = ""
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/dateforfamily"
+    admin_username: str = "admin"
+    admin_password: str = ""
 
 
 settings = Settings()

@@ -4,7 +4,7 @@ import pytest
 
 from bot.scheduler import SCHEDULER_KEY, run_matching_if_due
 from core.consent import CURRENT_CONSENT_VERSION
-from core.models import Gender
+from core.models import Gender, UserStatus
 from core.questions import QUESTIONS
 from core.repository import create_user, get_scheduler_value, save_answer
 from core.weekly_matching import week_start
@@ -42,6 +42,8 @@ async def make_matchable_pair(db_session, tg_a: int, tg_b: int):
         consent_version=CURRENT_CONSENT_VERSION,
     )
     for user in (a, b):
+        user.status = UserStatus.VERIFIED
+        await db_session.commit()
         for question in QUESTIONS:
             own_value = question.options[0]
             await save_answer(

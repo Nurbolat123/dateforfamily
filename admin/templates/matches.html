@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Подборки — админка{% endblock %}
+{% block content %}
+<h1>Подборки ({{ matches|length }})</h1>
+<p style="color:#666;">Список только для просмотра — подбор и отправка уже произошли автоматически.</p>
+{% if matches %}
+<table>
+    <tr>
+        <th>Неделя</th>
+        <th>Кто</th>
+        <th>С кем</th>
+        <th>Совпадение</th>
+        <th>Ответ первого</th>
+        <th>Ответ второго</th>
+        <th>Создано</th>
+    </tr>
+    {% for row in matches %}
+    <tr>
+        <td>{{ row.week }}</td>
+        <td>{{ row.user_a_name }}</td>
+        <td>{{ row.user_b_name }}</td>
+        <td>{{ row.percent }}%</td>
+        <td>{{ row.status_a_label }}</td>
+        <td>{{ row.status_b_label }}</td>
+        <td>{{ row.created_at }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty">Подборок пока не было.</p>
+{% endif %}
+{% endblock %}
