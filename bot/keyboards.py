@@ -25,3 +25,11 @@ def multiselect_keyboard(
     builder.adjust(1)
     builder.row(InlineKeyboardButton(text=done_label, callback_data=done_callback))
     return builder.as_markup()
+
+
+def match_decision_keyboard(match_id: int, interest_label: str, decline_label: str) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text=interest_label, callback_data=f"match:interest:{match_id}")
+    builder.button(text=decline_label, callback_data=f"match:decline:{match_id}")
+    builder.adjust(1)
+    return builder.as_markup()

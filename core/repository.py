@@ -9,12 +9,16 @@ from datetime import date, datetime, timezone
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models import Answer, Gender, Language, User, UserStatus
+from core.models import Answer, Gender, Language, Match, MatchStatus, SchedulerState, User, UserStatus
 
 
 async def get_user_by_tg_id(session: AsyncSession, tg_id: int) -> User | None:
     result = await session.execute(select(User).where(User.tg_id == tg_id))
     return result.scalar_one_or_none()
+
+
+async def get_user_by_id(session: AsyncSession, user_id: int) -> User | None:
+    return await session.get(User, user_id)
 
 
 async def create_user(
@@ -84,4 +88,32 @@ async def save_answer(
             importance=importance,
         )
     )
+    await session.commit()
+
+
+async def get_scheduler_value(session: AsyncSession, key: str) -> str | None:
+    state = await session.get(SchedulerState, key)
+    return state.value if state else None
+
+
+async def set_scheduler_value(session: AsyncSession, key: str, value: str) -> None:
+    state = await session.get(SchedulerState, key)
+    if state is None:
+        session.add(SchedulerState(key=key, value=value))
+    else:
+        state.value = value
+    await session.commit()
+
+
+async def get_match_by_id(session: AsyncSession, match_id: int) -> Match | None:
+    return await session.get(Match, match_id)
+
+
+async def set_match_side_status(
+    session: AsyncSession, match: Match, *, is_user_a: bool, status: MatchStatus
+) -> None:
+    if is_user_a:
+        match.status_a = status
+    else:
+        match.status_b = status
     await session.commit()

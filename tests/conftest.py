@@ -10,8 +10,11 @@ from core.models import Base
 async def db_session() -> AsyncSession:
     """Сессия к тестовой базе данных (DATABASE_URL из .env / переменных окружения).
 
-    Перед каждым тестом создаёт все таблицы заново и удаляет их после —
-    так тесты не зависят друг от друга и не портят реальные данные.
+    Таблицы должны быть уже созданы через "alembic upgrade head" — тесты их
+    не создают и не удаляют, а только очищают данные до и после каждого
+    теста. Так база всегда остаётся в состоянии, которое знает Alembic
+    (никаких "ручных правок схемы", как и требует CLAUDE.md), а тесты всё
+    равно не влияют друг на друга.
 
     Также сбрасывает пул соединений core.db.engine: он создаётся один раз
     при импорте модуля и иначе может остаться "привязан" к циклу событий
@@ -22,14 +25,18 @@ async def db_session() -> AsyncSession:
     await bot_db.engine.dispose()
 
     engine = create_async_engine(settings.database_url)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+
+    async def clear_all_tables() -> None:
+        async with engine.begin() as conn:
+            for table in reversed(Base.metadata.sorted_tables):
+                await conn.execute(table.delete())
+
+    await clear_all_tables()
 
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     async with session_factory() as session:
         yield session
 
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    await clear_all_tables()
     await engine.dispose()
     await bot_db.engine.dispose()

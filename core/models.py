@@ -133,6 +133,19 @@ class Feedback(Base):
     reason: Mapped[str | None] = mapped_column(default=None)
 
 
+class SchedulerState(Base):
+    """Служебная таблица для фоновых задач бота.
+
+    Например, хранит, за какую неделю уже был выполнен расчёт подбора,
+    чтобы не считать его повторно при каждом перезапуске бота.
+    """
+
+    __tablename__ = "scheduler_state"
+
+    key: Mapped[str] = mapped_column(primary_key=True)
+    value: Mapped[str]
+
+
 class Report(Base):
     __tablename__ = "reports"
 

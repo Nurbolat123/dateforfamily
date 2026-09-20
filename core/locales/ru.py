@@ -185,4 +185,26 @@ UI: dict[str, str] = {
         "Хорошо, пройдём анкету заново — ваши старые ответы будут заменены "
         "новыми."
     ),
+    "match_intro": "Вам новый кандидат от нашего подбора!",
+    "match_city_line": "Город: {city}",
+    "match_relocate_yes": "Готов(а) переехать ради семьи",
+    "match_relocate_no": "Не готов(а) переехать",
+    "match_score_line": "Совпадение по важным для вас пунктам: {percent}%",
+    "match_matched_header": "Что совпало:",
+    "match_mismatched_header": "Где расхождения:",
+    "match_no_mismatches": "Расхождений по важным для вас пунктам нет.",
+    "match_interest_button": "❤️ Интересно",
+    "match_decline_button": "Не интересно",
+    "match_interest_ack": (
+        "Хорошо! Если этот человек тоже отметит «интересно» — пришлём вам "
+        "контакт."
+    ),
+    "match_declined_ack": "Хорошо, пропустим этого кандидата.",
+    "match_already_decided": "Вы уже ответили на этот вариант.",
+    "mutual_match_intro": "Ура! У вас взаимный интерес с {name}!",
+    "mutual_match_contact_username": "Вот контакт в Telegram: @{username}",
+    "mutual_match_contact_link": (
+        "У этого человека не указан публичный username в Telegram. "
+        "Открыть профиль можно по ссылке (откройте в приложении Telegram): {link}"
+    ),
 }
