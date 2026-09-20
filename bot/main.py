@@ -6,7 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from bot.handlers import router
-from bot.scheduler import matching_scheduler
+from bot.scheduler import feedback_scheduler, matching_scheduler
 from core.config import settings
 
 
@@ -23,6 +23,7 @@ async def main() -> None:
     dispatcher.include_router(router)
 
     asyncio.create_task(matching_scheduler(bot))
+    asyncio.create_task(feedback_scheduler(bot))
 
     await dispatcher.start_polling(bot)
 

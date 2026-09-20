@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from aiogram import Bot, F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
@@ -120,6 +122,10 @@ async def handle_match_decision(callback: CallbackQuery) -> None:
         new_status = MatchStatus.INTERESTED if decision == "interest" else MatchStatus.DECLINED
         await set_match_side_status(session, match, is_user_a=is_user_a, status=new_status)
         mutual = match.status_a == MatchStatus.INTERESTED and match.status_b == MatchStatus.INTERESTED
+
+        if mutual and match.mutual_at is None:
+            match.mutual_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            await session.commit()
 
     await callback.message.edit_reply_markup(reply_markup=None)
 

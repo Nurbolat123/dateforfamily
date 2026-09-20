@@ -126,6 +126,7 @@ async def test_mutual_interest_reveals_contact_with_username(db_session):
     match = await get_match_by_id(db_session, match_id)
     assert match.status_a == MatchStatus.INTERESTED
     assert match.status_b == MatchStatus.INTERESTED
+    assert match.mutual_at is not None  # нужно для отсчёта 3 дней до запроса отзыва
 
 
 async def test_decline_does_not_reveal_contact_even_if_other_interested(db_session):

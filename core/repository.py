@@ -9,7 +9,18 @@ from datetime import date, datetime, timezone
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models import Answer, Gender, Language, Match, MatchStatus, Report, SchedulerState, User, UserStatus
+from core.models import (
+    Answer,
+    Feedback,
+    Gender,
+    Language,
+    Match,
+    MatchStatus,
+    Report,
+    SchedulerState,
+    User,
+    UserStatus,
+)
 
 
 async def get_user_by_tg_id(session: AsyncSession, tg_id: int) -> User | None:
@@ -154,3 +165,19 @@ async def get_report_by_id(session: AsyncSession, report_id: int) -> Report | No
 async def resolve_report(session: AsyncSession, report: Report) -> None:
     report.resolved = True
     await session.commit()
+
+
+async def create_feedback(
+    session: AsyncSession,
+    *,
+    match_id: int,
+    from_user_id: int,
+    met: bool,
+    liked: bool | None,
+    reason: str,
+) -> Feedback:
+    feedback = Feedback(match_id=match_id, from_user_id=from_user_id, met=met, liked=liked, reason=reason)
+    session.add(feedback)
+    await session.commit()
+    await session.refresh(feedback)
+    return feedback

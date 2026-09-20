@@ -22,3 +22,8 @@ class Survey(StatesGroup):
 
 class ReportFlow(StatesGroup):
     waiting_reason = State()
+
+
+class FeedbackFlow(StatesGroup):
+    waiting_liked = State()
+    waiting_reason = State()

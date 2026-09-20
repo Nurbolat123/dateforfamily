@@ -120,6 +120,11 @@ class Match(Base):
     created_at: Mapped[datetime] = mapped_column(
         default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
     )
+    # Момент, когда ОБА отметили "интересно" — от него считаются 3 дня до
+    # запроса отзыва (см. core/feedback.py). None, если взаимности ещё нет.
+    mutual_at: Mapped[datetime | None] = mapped_column(default=None)
+    feedback_requested_a: Mapped[bool] = mapped_column(default=False)
+    feedback_requested_b: Mapped[bool] = mapped_column(default=False)
 
 
 class Feedback(Base):
